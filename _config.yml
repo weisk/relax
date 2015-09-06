@@ -1,0 +1,8 @@
+markdown: rdiscount
+highlighter: pygments
+permalink: /:title
+exclude:
+- node_modules
+- Gruntfile
+- npm-debug.log
+- package.json
