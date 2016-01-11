@@ -2,64 +2,61 @@ import React from 'react';
 import {Component} from 'relax-framework';
 
 export default class Autocomplete extends Component {
-  componentDidMount () {
-    super.componentDidMount();
-    const autoFocus = this.props.autoFocus;
+  static propTypes = {
+    autoFocus: React.PropTypes.bool,
+    value: React.PropTypes.string.isRequired,
+    onChange: React.PropTypes.func.isRequired,
+    suggestion: React.PropTypes.string
+  }
 
-    if (autoFocus) {
+  static defaultProps = {
+    autoFocus: true
+  }
+
+  componentDidMount () {
+    if (this.props.autoFocus) {
       this.focus();
     }
   }
 
   onInput (e) {
-    var str = React.findDOMNode(this.refs.editable).innerText;
-
-    if (this.props.onChange) {
-      this.props.onChange(str);
-    }
+    const str = this.refs.editable.innerText;
+    this.props.onChange(str);
   }
 
   focus () {
-    var el = React.findDOMNode(this.refs.editable);
+    const el = this.refs.editable;
     el.focus();
-    if (typeof window.getSelection !== "undefined" && typeof document.createRange !== "undefined") {
-      var range = document.createRange();
+    if (typeof window.getSelection !== 'undefined' && typeof document.createRange !== 'undefined') {
+      const range = document.createRange();
       range.selectNodeContents(el);
       range.collapse(false);
-      var sel = window.getSelection();
+      const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-    } else if (typeof document.body.createTextRange !== "undefined") {
-      var textRange = document.body.createTextRange();
-      textRange.moveToElementText(el);
-      textRange.collapse(false);
-      textRange.select();
+    } else if (typeof document.body.createTextRange !== 'undefined') {
+      const range = document.body.createTextRange();
+      range.moveToElementText(el);
+      range.collapse(false);
+      range.select();
     }
   }
 
   render () {
-    var suggestion = '';
-
-    if (this.props.suggestion !== '') {
-      suggestion = this.props.suggestion.slice(this.props.value.length);
+    let before = '';
+    let after = '';
+    if (this.props.suggestion) {
+      const index = this.props.suggestion.toLowerCase().indexOf(this.props.value.toLowerCase());
+      before = index > 0 && this.props.suggestion.slice(0, index);
+      after = this.props.suggestion.slice(index + this.props.value.length);
     }
 
     return (
       <div className='autocomplete'>
-        <span ref='editable' className='editable' onInput={this.onInput.bind(this)} contentEditable={true}>{this.props.value}</span>
-        <span onClick={this.focus.bind(this)}>{suggestion}</span>
+        <span onClick={::this.focus}>{before}</span>
+        <span ref='editable' className='editable' onInput={::this.onInput} contentEditable>{this.props.value}</span>
+        <span onClick={::this.focus}>{after}</span>
       </div>
     );
   }
 }
-
-Autocomplete.propTypes = {
-  autoFocus: React.PropTypes.bool,
-  onChange: React.PropTypes.func,
-  suggestion: React.PropTypes.string,
-  value: React.PropTypes.string.isRequired
-};
-
-Autocomplete.defaultProps = {
-  autoFocus: true
-};

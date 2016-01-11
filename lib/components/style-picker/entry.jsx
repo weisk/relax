@@ -1,23 +1,21 @@
+import React, {PropTypes} from 'react';
 import {Component} from 'relax-framework';
-import React from 'react';
-import styles from '../../styles';
-import OptionsMenu from '../options-menu';
-import cloneDeep from 'lodash.clonedeep';
-import cx from 'classnames';
 
-import stylesActions from '../../client/actions/style';
+import OptionsMenu from '../options-menu';
 
 export default class Entry extends Component {
-  getInitialState () {
-    return {
-      classesMap: styles.getClassesMap(this.props.entry._id),
-      options: false
-    };
+  static propTypes = {
+    entry: PropTypes.object.isRequired,
+    onClick: PropTypes.func.isRequired,
+    styleOptions: PropTypes.object.isRequired,
+    removeStyle: PropTypes.func.isRequired,
+    duplicateStyle: PropTypes.func.isRequired
   }
 
-  onClick (event) {
-    event.preventDefault();
-    this.props.onClick(this.props.entry._id);
+  getInitState () {
+    return {
+      options: false
+    };
   }
 
   openOptions (event) {
@@ -36,42 +34,38 @@ export default class Entry extends Component {
     }
   }
 
-  edit () {
-    this.props.onEdit(this.props.entry._id);
-    this.setState({
-      options: false
-    });
+  onClick (event) {
+    event.preventDefault();
+    this.props.onClick(this.props.entry._id);
   }
 
   duplicate () {
-    var duplicate = cloneDeep(this.props.entry);
-    delete duplicate._id;
-
-    stylesActions.add(duplicate);
-
-    this.setState({
-      options: false
-    });
+    this.props.duplicateStyle(this.props.entry);
   }
 
   remove () {
-    stylesActions.remove(this.props.entry._id);
+    this.props.removeStyle(this.props.entry._id);
   }
 
-  renderInfo () {
-    if (this.props.styleOptions.getIdentifierLabel) {
-      return (
-        <span className='info'>{this.props.styleOptions.getIdentifierLabel(this.props.entry.options)}</span>
-      );
-    }
-  }
-
-  renderPreview () {
-    if (this.props.styleOptions.preview) {
-      return (
-        <div className='preview'>
-          {this.props.styleOptions.preview(this.state.classesMap)}
+  render () {
+    return (
+      <div className='entry' onClick={::this.onClick} onMouseLeave={::this.onMouseLeave}>
+        <div className='info-holder'>
+          <span className='title'>{this.props.entry.title}</span>
+          {this.renderOptionsButton()}
+          {this.renderInfo()}
         </div>
+      </div>
+    );
+  }
+
+  renderOptionsButton () {
+    if (this.props.entry._id !== 'no_style') {
+      return (
+        <span className='options-btn' onClick={::this.openOptions}>
+          <i className='material-icons'>more_horiz</i>
+          {this.renderOptionsMenu()}
+        </span>
       );
     }
   }
@@ -80,43 +74,18 @@ export default class Entry extends Component {
     if (this.state.options) {
       return (
         <OptionsMenu options={[
-          {label: 'Edit', action: this.edit.bind(this), icon: 'fa fa-pencil'},
-          {label: 'Duplicate', action: this.duplicate.bind(this), icon: 'fa fa-copy'},
-          {label: 'Remove', action: this.remove.bind(this), icon: 'fa fa-trash-o'}
+          {label: 'Duplicate', action: ::this.duplicate, icon: 'fa fa-copy'},
+          {label: 'Remove', action: ::this.remove, icon: 'fa fa-trash-o'}
         ]} />
       );
     }
   }
 
-  render () {
-    var className = cx(
-      'entry',
-      this.props.selected && 'selected',
-      this.props.entry.options && this.props.entry.options.preview && 'contrast',
-      this.props.editing && 'editing'
-    );
-
-    return (
-      <div className={className} onClick={this.onClick.bind(this)} onMouseLeave={this.onMouseLeave.bind(this)}>
-        <div className='info-holder'>
-          <span className='title'>{this.props.entry.title}</span>
-          {this.renderInfo()}
-        </div>
-        {this.renderPreview()}
-        <div className='options-btn' onClick={this.openOptions.bind(this)}>
-          <i className='material-icons'>more_horiz</i>
-          {this.renderOptionsMenu()}
-        </div>
-      </div>
-    );
+  renderInfo () {
+    if (this.props.styleOptions.getIdentifierLabel && this.props.entry._id !== 'no_style') {
+      return (
+        <span className='info'>{this.props.styleOptions.getIdentifierLabel(Object.assign({}, this.props.styleOptions.defaults, this.props.entry.options))}</span>
+      );
+    }
   }
 }
-
-Entry.propTypes = {
-  entry: React.PropTypes.object.isRequired,
-  styleOptions: React.PropTypes.object.isRequired,
-  selected: React.PropTypes.bool.isRequired,
-  editing: React.PropTypes.bool.isRequired,
-  onClick: React.PropTypes.func.isRequired,
-  onEdit: React.PropTypes.func.isRequired
-};

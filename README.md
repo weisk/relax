@@ -2,9 +2,9 @@
 ====================================
 [![Slack Status](http://slack-relax.herokuapp.com/badge.svg)](http://slack-relax.herokuapp.com/)
 
-**Demo credentials**:
- - user: demo
- - pass: demo
+**IMPORTANT NOTE:** Relax isn't yet ready for production, stay tunned for releases, beta version will come soon
+
+Support our work and help us make this the best open source CMS, be our [patreon](http://patreon.com/relax)!
 
 Relax is a powerful new generation CMS on top of
 [React](https://facebook.github.io/react/) and [Node.js](https://nodejs.org/en/)
@@ -13,17 +13,24 @@ which aims for a better way of building websites.
 It features a live page builder based on components and a smart and easy way of
 binding dynamic data to them.
 
-We're currently working on releasing the beta version which should come up early October. If you want to collaborate in the meantime or just say anything join us at [Relax Slack](http://slack-relax.herokuapp.com/)
+We're currently working on releasing the beta version which should come up early 2016. If you want to collaborate in the meantime or just say anything join us at [Relax Slack](http://slack-relax.herokuapp.com/)
 
 ![Relax Screenshot](https://raw.githubusercontent.com/relax/relax/gh-pages/assets/images/screenshot.jpg "Relax screenshot")
 
+**You can check the demo [here](http://demo.getrelax.io/admin)**
+
+Demo credentials:
+ - user: demo
+ - pass: demo
 
 Installation
 ------------
 
 ### Dependencies
 
-Relax uses [sharp](https://github.com/lovell/sharp) to resize images so you'll need to install its dependencies. Fortunately they have great documentation on how to install them for each platform, you can check them [here](http://sharp.dimens.io/en/stable/install/).
+Relax uses [sharp](https://github.com/lovell/sharp) to resize images.
+If you're using OS X, you'll need to install its libvips dependency via `brew install homebrew/science/vips`.
+Full installation instructions are available [here](http://sharp.dimens.io/en/stable/install/).
 
 You'll also need [MongoDB](https://www.mongodb.org/).
 
@@ -48,7 +55,7 @@ You can find a sample with the default values [here](.relaxrc.sample).
 Contributing
 ------------
 
-### Build
+### Build and start
 
 #### Development
 
@@ -60,7 +67,7 @@ up to date.
 
 #### Production
 
-To build your assets ready to go for production run `npm run build`.
+To build your assets ready to go for production run `npm run build` and `npm start` to start the application.
 
 
 License

@@ -1,5 +1,9 @@
-import rc from 'rc';
+var rc = require('rc');
 
-export default rc('relax', {
-   port: 8080
+module.exports = rc('relax', {
+  port: 8080,
+  devPort: 8181,
+  db: {
+    uri: 'mongodb://localhost/relax'
+  }
 });

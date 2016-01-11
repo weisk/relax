@@ -1,72 +1,93 @@
-import React from 'react';
-import cx from 'classnames';
-import styles from '../../../styles';
+import * as elementsActions from '../../../client/actions/elements';
+
+import React, {PropTypes} from 'react';
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
+import {buildQueryAndVariables} from 'relax-framework';
+
+import propsSchema from './props-schema';
+import settings from './settings';
+import style from './style';
 import Component from '../../component';
 import Element from '../../element';
+import Menu from './menu';
 
-import settings from './settings';
-import classes from './classes';
-import style from './style';
-import propsSchema from './props-schema';
-import Entry from './entry';
+const menuDataFragment = {
+  id: 1,
+  type: 1,
+  page: {
+    _id: 1,
+    title: 1
+  },
+  link: {
+    label: 1,
+    url: 1
+  }
+};
 
-import menusStore from '../../../client/stores/menus';
-
-export default class Menu extends Component {
-  getInitialModels (props = false) {
-    props = props || this.props;
-    let models = {};
-
-    if (props.menu && props.menu !== '') {
-      models.menu = menusStore.getModel(props.menu);
+@connect(
+  (state) => ({
+    elements: state.elements
+  }),
+  (dispatch) => bindActionCreators(elementsActions, dispatch)
+)
+export default class MenuContainer extends Component {
+  static fragments = {
+    menu: {
+      data: {
+        ...menuDataFragment,
+        children: {
+          ...menuDataFragment
+        }
+      }
     }
+  }
+  static propTypes = {
+    menuId: PropTypes.string,
+    elementId: PropTypes.string.isRequired,
+    elements: PropTypes.object.isRequired,
+    pageBuilder: PropTypes.object,
+    element: PropTypes.object.isRequired
+  }
 
-    return models;
+  static propsSchema = propsSchema
+  static settings = settings
+  static style = style
+
+  getInitState () {
+    this.fetchData(this.props);
+    return {};
   }
 
   componentWillReceiveProps (nextProps) {
-    if (nextProps.menu !== this.props.menu) {
-      this.setModels(this.getInitialModels(nextProps));
+    if (this.props.pageBuilder && this.props.pageBuilder.editing && nextProps.menuId !== this.props.menuId) {
+      this.fetchData(nextProps);
     }
   }
 
-  renderEntry (entry) {
-    return <Entry entry={entry} subitem={false} classMap={this.classMap} classes={classes} key={entry.id} />;
-  }
-
-  renderMenu () {
-    if (this.state.menu && this.state.menu.data) {
-      return (
-        <ul className={cx(classes.menu, this.classMap.menu)}>
-          {this.state.menu.data.map(this.renderEntry, this)}
-        </ul>
-      );
-    } else if (this.context.editing) {
-      return (
-        <div>Choose a menu on settings</div>
-      );
+  fetchData (props) {
+    if (props.menuId) {
+      props.getElementData(props.elementId, buildQueryAndVariables(
+        this.constructor.fragments,
+        {
+          menu: {
+            _id: {
+              value: props.menuId,
+              type: 'ID!'
+            }
+          }
+        }
+      ));
     }
   }
 
   render () {
-    this.classMap = (this.props.style && styles.getClassesMap(this.props.style)) || {};
-
+    const {elements, elementId} = this.props;
+    const menu = elements[elementId] && elements[elementId].menu;
     return (
-      <Element tag='div' settings={this.constructor.settings} element={this.props.element}>
-        {this.renderMenu()}
+      <Element htmlTag='div' settings={settings} info={this.props}>
+        <Menu {...this.props} menu={menu} />
       </Element>
     );
   }
 }
-
-Menu.propTypes = {
-  menu: React.PropTypes.string
-};
-
-Menu.contextTypes = {
-  editing: React.PropTypes.bool
-};
-
-styles.registerStyle(style);
-Menu.propsSchema = propsSchema;
-Menu.settings = settings;

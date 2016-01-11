@@ -1,17 +1,35 @@
-import React from 'react';
+import React, {PropTypes} from 'react';
+import {findDOMNode} from 'react-dom';
 import {Component} from 'relax-framework';
+
 import MediaImage from './image';
 import Utils from '../utils';
 
 export default class BackgroundImage extends Component {
-  getInitialState () {
+
+  static propTypes = {
+    backgroundImage: PropTypes.string.isRequired,
+    repeat: PropTypes.string.isRequired,
+    vertical: PropTypes.number,
+    horizontal: PropTypes.number,
+    opacity: PropTypes.number
+  }
+
+  static defaultProps = {
+    backgroundImage: '',
+    repeat: 'no-repeat',
+    vertical: 50,
+    horizontal: 50,
+    opacity: 100
+  }
+
+  getInitState () {
     return {
       mounted: false
     };
   }
 
   componentDidMount () {
-    super.componentDidMount();
     this.resize();
   }
 
@@ -20,11 +38,10 @@ export default class BackgroundImage extends Component {
   }
 
   resize () {
-    var dom = React.findDOMNode(this);
-    var rect = dom.getBoundingClientRect();
-
-    var width = Math.round(rect.right-rect.left);
-    var height = Math.round(rect.bottom-rect.top);
+    const dom = findDOMNode(this);
+    const rect = dom.getBoundingClientRect();
+    const width = Math.round(rect.right - rect.left);
+    const height = Math.round(rect.bottom - rect.top);
 
     if (this.state.width !== width || this.state.height !== height) {
       this.setState({
@@ -46,7 +63,7 @@ export default class BackgroundImage extends Component {
       };
 
       if (this.props.repeat === 'no-repeat') {
-        var imageStyle= {
+        var imageStyle = {
           position: 'relative',
           minWidth: '100%',
           minHeight: '100%',
@@ -54,7 +71,7 @@ export default class BackgroundImage extends Component {
         };
         imageStyle.top = this.state.height * (this.props.vertical / 100);
         imageStyle.left = this.state.width * (this.props.horizontal / 100);
-        Utils.translate(imageStyle, (-this.props.horizontal)+'%', (-this.props.vertical)+'%');
+        Utils.translate(imageStyle, (-this.props.horizontal) + '%', (-this.props.vertical) + '%');
 
         result = (
           <div style={style}>
@@ -62,9 +79,9 @@ export default class BackgroundImage extends Component {
           </div>
         );
       } else {
-        style.backgroundImage = 'url("'+Utils.getBestImageUrl(this.props.backgroundImage)+'")';
+        style.backgroundImage = 'url("' + Utils.getBestImageUrl(this.props.backgroundImage) + '")';
         style.backgroundRepeat = this.props.repeat;
-        style.backgroundPosition = (-this.props.horizontal)+'% '+(-this.props.vertical)+'%';
+        style.backgroundPosition = (-this.props.horizontal) + '% ' + (-this.props.vertical) + '%';
         result = <div style={style}></div>;
       }
 
@@ -74,19 +91,3 @@ export default class BackgroundImage extends Component {
     return <span/>;
   }
 }
-
-BackgroundImage.propTypes = {
-  backgroundImage: React.PropTypes.string.isRequired,
-  repeat: React.PropTypes.string.isRequired,
-  vertical: React.PropTypes.number,
-  horizontal: React.PropTypes.number,
-  opacity: React.PropTypes.number
-};
-
-BackgroundImage.defaultProps = {
-  backgroundImage: '',
-  repeat: 'no-repeat',
-  vertical: 50,
-  horizontal: 50,
-  opacity: 100
-};

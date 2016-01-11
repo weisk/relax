@@ -1,112 +1,159 @@
-import React from 'react';
-import {Droppable} from '../drag';
+import forEach from 'lodash.foreach';
+import React, {PropTypes} from 'react';
 import {Component} from 'relax-framework';
-import displays from '../../displays';
+import {Component as JSS} from 'relax-jss';
+
+import displays from '../../helpers/displays';
+import getElementProps from '../../helpers/get-element-props';
+import stylesManager from '../../helpers/styles-manager';
 import utils from '../../utils';
+import {Droppable} from '../dnd';
 
 export default class Canvas extends Component {
-  componentDidMount () {
-    super.componentDidMount();
-    React.findDOMNode(this.refs.canvas).addEventListener('scroll', this.onScroll.bind(this));
+  static propTypes = {
+    dnd: PropTypes.object.isRequired,
+    dndActions: PropTypes.object.isRequired,
+    pageBuilder: PropTypes.object.isRequired,
+    pageBuilderActions: PropTypes.object.isRequired,
+    display: PropTypes.string.isRequired,
+    styles: PropTypes.array.isRequired
+  }
+
+  static childContextTypes = {
+    dropHighlight: PropTypes.string.isRequired
+  }
+
+  getInitState () {
+    this.renderElementBind = ::this.renderElement;
+    this.renderChildrenBind = ::this.renderChildren;
+    return {};
   }
 
   getChildContext () {
     return {
-      renderElement: this.renderElement.bind(this, {}),
-      dropHighlight: this.context.dragging ? 'vertical' : 'none'
+      dropHighlight: this.props.pageBuilder.dragging ? 'vertical' : 'none'
     };
   }
 
+  componentDidMount () {
+    this.refs.canvas.addEventListener('scroll', this.onScroll.bind(this));
+  }
+
   onScroll () {
-    /* jshint ignore:start */
     window.dispatchEvent(new Event('scroll'));
-    /* jshint ignore:end */
   }
 
   onElementClick (id, event) {
     event.preventDefault();
-    this.context.selectElement(id);
+    this.props.pageBuilderActions.selectElement(id);
   }
 
-  getElementsSchemaLinks () {
-    let elementsLinks = {};
-    if (this.context.schemaEntry && this.context.page.schemaLinks) {
-      elementsLinks = utils.getElementsSchemaLinks(this.context.page.schemaLinks);
+  render () {
+    const {data} = this.props.pageBuilder;
+    const dropInfo = {
+      id: 'body',
+      type: 'body'
+    };
+    const bodyStyle = {
+      margin: '0 auto',
+      maxWidth: displays[this.props.display]
+    };
+
+    // Process schema links if any
+    const elementsLinks = {};
+    const elements = data && data.body && this.renderChildren(data.body.children, elementsLinks);
+
+    return (
+      <div className='page-builder-canvas' ref='canvas'>
+        <div className='body-element' style={bodyStyle} ref='body'>
+          <Droppable
+            type='body'
+            placeholderOverlap={this.renderEmpty}
+            dropInfo={dropInfo}
+            accepts='Section'
+            placeholder
+            dnd={this.props.dnd}
+            dndActions={this.props.dndActions}
+            pageBuilder={this.props.pageBuilder}
+            pageBuilderActions={this.props.pageBuilderActions}
+            minHeight='100%'>
+            {elements}
+          </Droppable>
+        </div>
+        {this.renderStyles()}
+      </div>
+    );
+  }
+
+  renderEmpty (renderMark) {
+    return (
+      <div className='pb-empty-placeholder'>
+        <div className='pb-empty-placeholder-wrapper'>
+          <div className='title'>Let's get you started</div>
+          <div className='sub-title'>Click the blue dot below to add your first section</div>
+          {renderMark()}
+        </div>
+      </div>
+    );
+  }
+
+  renderStyles () {
+    const styleTags = [];
+    forEach(stylesManager.stylesMap, (styleMap, key) => {
+      styleTags.push(
+        <JSS stylesheet={styleMap.stylesheet} key={key} />
+      );
+    });
+    return styleTags;
+  }
+
+  renderChildren (children, elementsLinks = false, schemaEntry = false) {
+    let result;
+    if ( children instanceof Array ) {
+      result = children.map(this.renderElement.bind(this, elementsLinks, schemaEntry));
+    } else {
+      result = children;
     }
-    return elementsLinks;
+    return result;
   }
 
-  renderElement (elementsLinks, element) {
-    if ((!element.hide || !element.hide[this.context.display]) && element.display !== false) {
+  renderElement (elementsLinks = false, schemaEntry = false, elementId, positionInParent) {
+    const {display} = this.props;
+    const {data, elements, selectedId} = this.props.pageBuilder;
+    let element = data[elementId];
 
-      if (this.context.schemaEntry && elementsLinks[element.id]) {
-        utils.alterSchemaElementProps(elementsLinks[element.id], element, this.context.schemaEntry);
+    const elementProps = getElementProps(element, display);
+    const styleClassMap = stylesManager.processElement(element, elementProps, elements[element.tag], this.props.styles, elements, this.props.display);
+
+    if ((!element.hide || !element.hide[this.props.display]) && element.display !== false) {
+      if (schemaEntry && elementsLinks && elementsLinks[element.id]) {
+        element = utils.alterSchemaElementProps(elementsLinks[element.id], element, schemaEntry);
       }
 
       if (element.display !== false) {
-        var FactoredElement = this.context.elements[element.tag];
-        var selected = this.context.selected && this.context.selected.id === element.id;
+        const FactoredElement = elements[element.tag];
+        const selected = selectedId === element.id;
 
         return (
-          <FactoredElement {...element.props} key={element.id} selected={selected} element={element}>
-            {this.renderChildren(element.children || '', elementsLinks)}
+          <FactoredElement
+            {...elementProps}
+            dnd={this.props.dnd}
+            dndActions={this.props.dndActions}
+            pageBuilder={this.props.pageBuilder}
+            pageBuilderActions={this.props.pageBuilderActions}
+            display={this.props.display}
+            key={elementId}
+            selected={selected}
+            element={element}
+            elementId={elementId}
+            positionInParent={positionInParent}
+            styleClassMap={styleClassMap}
+            renderElement={this.renderElementBind}
+            renderChildren={this.renderChildrenBind}>
+            {element.children && this.renderChildren(element.children, elementsLinks, schemaEntry)}
           </FactoredElement>
         );
       }
     }
   }
-
-  renderChildren (children, elementsLinks) {
-    // group of elements (array)
-    if ( children instanceof Array ) {
-      return children.map(this.renderElement.bind(this, elementsLinks));
-    }
-    // String or other static content
-    else {
-      return children;
-    }
-  }
-
-  render () {
-    var dropInfo = {
-      type: 'body'
-    };
-
-    var bodyStyle = {
-      margin: '0 auto',
-      maxWidth: displays[this.context.display]
-    };
-
-    // Process schema links if any
-    const elementsLinks = this.getElementsSchemaLinks();
-
-    return (
-      <div>
-        <div className='page-builder-canvas' ref='canvas'>
-          <div className='body-element' style={bodyStyle} ref='body'>
-            <Droppable type='body' dropInfo={dropInfo} accepts='Section' placeholder={true}>
-              {this.renderChildren(this.context.page.data, elementsLinks)}
-            </Droppable>
-          </div>
-        </div>
-      </div>
-    );
-  }
 }
-
-Canvas.childContextTypes = {
-  renderElement: React.PropTypes.func.isRequired,
-  dropHighlight: React.PropTypes.string.isRequired
-};
-
-Canvas.contextTypes = {
-  schemaEntry: React.PropTypes.object,
-  dragging: React.PropTypes.bool,
-  selected: React.PropTypes.any.isRequired,
-  elements: React.PropTypes.object.isRequired,
-  selectElement: React.PropTypes.func.isRequired,
-  addElementAtSelected: React.PropTypes.func.isRequired,
-  page: React.PropTypes.object.isRequired,
-  display: React.PropTypes.string.isRequired,
-  editing: React.PropTypes.bool.isRequired
-};

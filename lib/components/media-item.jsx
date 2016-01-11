@@ -1,39 +1,66 @@
-import React from 'react';
+import React, {PropTypes} from 'react';
 import {Component} from 'relax-framework';
+
 import Image from './image';
-import utils from '../utils';
+import {getMediaType} from '../helpers/mime-types';
 
 export default class MediaItem extends Component {
+  static fragments = {
+    media: {
+      _id: 1,
+      thumbnail: 1,
+      url: 1,
+      name: 1,
+      type: 1
+    }
+  }
+
+  static propTypes = {
+    item: PropTypes.object.isRequired,
+    width: PropTypes.number,
+    height: PropTypes.number,
+    useThumbnail: PropTypes.bool
+  }
+
+  static defaultProps = {
+    useThumbnail: true
+  }
+
   render () {
+    const {item, useThumbnail, width, height} = this.props;
     let result = <span />;
-    const type = utils.getMediaType(this.props.item.type);
+    const type = getMediaType(this.props.item.type);
 
     if (type === 'image') {
-      if (this.props.useThumbnail) {
+      if (item.preview) {
         result = (
-          <img src={this.props.item.thumbnail} width={this.props.width} height={this.props.height} />
+          <img src={`${item.preview}`} style={{minWidth: width, minHeight: height}} />
+        );
+      } else if (useThumbnail) {
+        result = (
+          <img src={`/${item.thumbnail}`} width={width} height={height} />
         );
       } else {
         result = (
-          <Image id={this.props.item._id} width={this.props.width} height={this.props.height} />
+          <Image id={item._id} width={width} height={height} />
         );
       }
     } else if (type === 'favicon') {
       result = (
-        <img src={this.props.item.url} style={{top: '50%', left: '50%', position: 'absolute', transform: 'translate(-50%, -50%)'}} />
+        <img src={`/${item.url || item.preview}`} style={{top: '50%', left: '50%', position: 'absolute', transform: 'translate(-50%, -50%)'}} />
       );
     } else if (type === 'video') {
       result = (
         <div className='not-image'>
           <i className='material-icons'>videocam</i>
-          <span>{this.props.item.name}</span>
+          <span>{item.name}</span>
         </div>
       );
     } else if (type === 'audio') {
       result = (
         <div className='not-image'>
           <i className='material-icons'>music_note</i>
-          <span>{this.props.item.name}</span>
+          <span>{item.name}</span>
         </div>
       );
     }
@@ -41,14 +68,3 @@ export default class MediaItem extends Component {
     return <div className='media-item'>{result}</div>;
   }
 }
-
-MediaItem.propTypes = {
-  item: React.PropTypes.object.isRequired,
-  width: React.PropTypes.number,
-  height: React.PropTypes.number,
-  useThumbnail: React.PropTypes.bool
-};
-
-MediaItem.defaultProps = {
-  useThumbnail: true
-};

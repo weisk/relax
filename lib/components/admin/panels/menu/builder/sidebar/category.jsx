@@ -1,8 +1,18 @@
-import {Component} from 'relax-framework';
 import React from 'react';
+import {Component} from 'relax-framework';
 
 export default class Category extends Component {
-  getInitialState () {
+  static propTypes = {
+    title: React.PropTypes.string.isRequired,
+    icon: React.PropTypes.string.isRequired,
+    defaultOpened: React.PropTypes.string.isRequired
+  }
+
+  static defaultProps = {
+    defaultOpened: true
+  }
+
+  getInitState () {
     return {
       toggled: this.props.defaultOpened
     };
@@ -32,13 +42,3 @@ export default class Category extends Component {
     );
   }
 }
-
-Category.defaultProps = {
-  defaultOpened: true
-};
-
-Category.propTypes = {
-  title: React.PropTypes.string.isRequired,
-  icon: React.PropTypes.string.isRequired,
-  defaultOpened: React.PropTypes.string.isRequired
-};

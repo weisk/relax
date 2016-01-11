@@ -1,3 +1,4 @@
+@import './loading.less';
 @import './menu-bar.less';
 @import './top-menu/index.less';
 @import './filter.less';
@@ -49,13 +50,9 @@ p {
 .loading-bar-frames() {
   0% {
     left: -30%;
-  	// -webkit-transform:translateX(0);
-  	// transform:translateX(0);
   }
   100% {
     left: 100%;
-  	// -webkit-transform:translateX(100%);
-  	// transform:translateX(100%);
   }
 }
 
@@ -65,9 +62,9 @@ p {
 }
 
 .blurred {
-  .transition(0.4s);
-  -webkit-filter: blur(5px);
-  filter: blur(5px);
+  //.transition(0.4s);
+  -webkit-filter: blur(3px);
+  filter: blur(3px);
 }
 
 .admin-holder {
